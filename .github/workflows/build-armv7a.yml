@@ -34,20 +34,16 @@ jobs:
           cd web-ui
           pnpm install
 
-      - name: Unpack material-color-utilities kotlin
+      - name: Setup material-color-utilities
         run: |
           if [ -f kotlin.zip ]; then
             mkdir -p material3/material-color-utilities
             unzip -q kotlin.zip -d material3/material-color-utilities/
             rm kotlin.zip
-            echo "✅ kotlin.zip unpacked to material3/material-color-utilities/"
           else
-            echo "⚠️ kotlin.zip not found, attempting sparse clone..."
             git clone --depth 1 --filter=blob:none --sparse \
               https://github.com/material-foundation/material-color-utilities.git temp
-            cd temp
-            git sparse-checkout set kotlin
-            cd ..
+            cd temp && git sparse-checkout set kotlin && cd ..
             mkdir -p material3/material-color-utilities
             mv temp/kotlin material3/material-color-utilities/
             rm -rf temp
@@ -58,15 +54,27 @@ jobs:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: echo $GOOGLE_SERVICES_JSON > app/google-services.json
 
-      - name: Modify build.gradle.kts to include armeabi-v7a and x86
+      - name: Modify build.gradle.kts to include armeabi-v7a
         run: |
           sed -i 's/abiFilters += listOf("arm64-v8a", "x86_64")/abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")/' app/build.gradle.kts
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease
+      - name: Setup signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > keystore.p12
+
+      - name: Build Release APK with signing
+        run: |
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$PWD/keystore.p12 \
+            -Pandroid.injected.signing.store.password=${{ secrets.SIGNING_KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.SIGNING_KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.SIGNING_KEY_PASSWORD }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: RikkaHub-armv7a
+          name: RikkaHub-armv7a-release
           path: app/build/outputs/apk/release/*.apk
