@@ -30,4 +30,5 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.material3)
+    implementation("com.google.android.material:material:1.12.0")
 }
