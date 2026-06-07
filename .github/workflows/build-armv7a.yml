@@ -16,19 +16,17 @@ jobs:
           repository: wangfenjin/simple
           path: libsimple
 
-      - name: Install CMake
-        run: sudo apt-get update && sudo apt-get install -y cmake
-
       - name: Setup Android NDK
-        run: |
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
-          echo "$ANDROID_HOME/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
 
       - name: Build libsimple for armeabi-v7a
         run: |
           cd libsimple
           mkdir -p build && cd build
-          cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+          cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_HOME/ndk/${{ steps.setup-ndk.outputs.ndk-version }}/build/cmake/android.toolchain.cmake \
                 -DANDROID_ABI=armeabi-v7a \
                 -DANDROID_PLATFORM=android-26 \
                 -DBUILD_SQLITE3=OFF \
@@ -40,7 +38,7 @@ jobs:
         with:
           name: libsimple-armeabi-v7a
           path: libsimple/build/libsimple.so
-
+          
   # ========== 任务2：主构建（依赖上面的编译结果） ==========
   build:
     needs: build-libsimple
