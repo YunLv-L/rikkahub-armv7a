@@ -1,4 +1,4 @@
-name: Build RikkaHub APK for ARMv7a (with libsimple.so)
+name: Build RikkaHub APK for ARMv7a
 
 on:
   workflow_dispatch:
@@ -6,45 +6,10 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  # ========== 任务1：编译 libsimple.so for armeabi-v7a ==========
-  build-libsimple:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout libsimple source
-        uses: actions/checkout@v4
-        with:
-          repository: wangfenjin/simple
-          path: libsimple
-
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r26d
-
-      - name: Build libsimple for armeabi-v7a
-        run: |
-          cd libsimple
-          mkdir -p build && cd build
-          cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_HOME/ndk/${{ steps.setup-ndk.outputs.ndk-version }}/build/cmake/android.toolchain.cmake \
-                -DANDROID_ABI=armeabi-v7a \
-                -DANDROID_PLATFORM=android-26 \
-                -DBUILD_SQLITE3=OFF \
-                -DCMAKE_BUILD_TYPE=Release ..
-          make
-
-      - name: Upload libsimple.so artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: libsimple-armeabi-v7a
-          path: libsimple/build/libsimple.so
-          
-  # ========== 任务2：主构建（依赖上面的编译结果） ==========
   build:
-    needs: build-libsimple
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout RikkaHub code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -89,22 +54,10 @@ jobs:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
-      - name: Modify build.gradle.kts to include armeabi-v7a
+      - name: Modify build.gradle.kts to include armeabi-v7a and x86
         run: |
           sed -i 's/abiFilters += listOf("arm64-v8a", "x86_64")/abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")/' app/build.gradle.kts
 
-      # ========== 关键步骤：下载编译好的 libsimple.so 并放入 jniLibs ==========
-      - name: Download libsimple.so artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: libsimple-armeabi-v7a
-          path: app/src/main/jniLibs/armeabi-v7a/
-
-      # （可选）验证文件是否存在
-      - name: Verify libsimple.so placement
-        run: ls -la app/src/main/jniLibs/armeabi-v7a/
-
-      # ========== 签名配置 ==========
       - name: Setup signing keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
