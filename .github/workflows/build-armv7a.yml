@@ -12,12 +12,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ========== 从直链下载并解压 JDK 21 ==========
+      # ========== 下载 JDK 21，伪装浏览器 User-Agent ==========
       - name: Download and setup JDK 21 from CDN
         run: |
           mkdir -p $HOME/jdk
-          # 下载 JDK 压缩包
-          wget -q --no-check-certificate \
+          wget -q \
+            --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" \
+            --header="Referer: https://pan.vma.cc/" \
+            --no-check-certificate \
             "https://pan.vma.cc/pan/d/d2fd4746607311f108ae32b8276aa2ac?ext=gz" \
             -O $HOME/jdk/jdk.tar.gz
           # 解压
