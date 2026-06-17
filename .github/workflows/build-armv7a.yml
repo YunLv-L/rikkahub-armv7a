@@ -12,11 +12,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
+      # ========== 从直链下载并解压 JDK 21 ==========
+      - name: Download and setup JDK 21 from CDN
+        run: |
+          mkdir -p $HOME/jdk
+          # 下载 JDK 压缩包
+          wget -q --no-check-certificate \
+            "https://pan.vma.cc/pan/d/d2fd4746607311f108ae32b8276aa2ac?ext=gz" \
+            -O $HOME/jdk/jdk.tar.gz
+          # 解压
+          tar -xzf $HOME/jdk/jdk.tar.gz -C $HOME/jdk
+          rm $HOME/jdk/jdk.tar.gz
+          # 自动检测解压后的目录名
+          JDK_DIR=$(ls $HOME/jdk | grep -m1 'jdk-')
+          echo "JAVA_HOME=$HOME/jdk/$JDK_DIR" >> $GITHUB_ENV
+          echo "$HOME/jdk/$JDK_DIR/bin" >> $GITHUB_PATH
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
