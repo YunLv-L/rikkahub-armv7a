@@ -12,6 +12,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 1️⃣ 下载并解压 JDK 21（使用伪装 UA 绕过网盘拦截）
       - name: Download and setup JDK 21 from CDN
         run: |
           mkdir -p $HOME/jdk
@@ -26,10 +27,14 @@ jobs:
           JDK_DIR=$(ls $HOME/jdk | grep -m1 'jdk-')
           echo "JAVA_HOME=$HOME/jdk/$JDK_DIR" >> $GITHUB_ENV
           echo "$HOME/jdk/$JDK_DIR/bin" >> $GITHUB_PATH
-          # ✅ 关键：写入 gradle.properties，强制 Gradle 使用此 JDK
-          echo "org.gradle.java.home=$HOME/jdk/$JDK_DIR" >> gradle.properties
-          # 保留原有的其他配置（不会覆盖已有行，而是追加）
-          echo "org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8" >> gradle.properties
+
+      # 2️⃣ 强制 Gradle 使用本地 JDK，禁用 toolchain 自动下载
+      - name: Configure Gradle to use local JDK
+        run: |
+          echo "org.gradle.java.home=$JAVA_HOME" >> gradle.properties
+          echo "org.gradle.jvm.toolchain.install=false" >> gradle.properties
+          # 停止所有 Daemon，确保新配置生效
+          ./gradlew --stop || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -81,6 +86,8 @@ jobs:
       - name: Build Release APK with signing
         run: |
           ./gradlew assembleRelease \
+            -Dorg.gradle.jvm.toolchain.install=false \
+            -Dorg.gradle.java.home=$JAVA_HOME \
             -Pandroid.injected.signing.store.file=$PWD/keystore.p12 \
             -Pandroid.injected.signing.store.password=${{ secrets.SIGNING_KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.SIGNING_KEY_ALIAS }} \
