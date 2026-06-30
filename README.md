@@ -8,9 +8,15 @@
 A native Android LLM chat client that supports switching between different providers for
 conversations 🤖💬
 
+**📌 ARMv7a 适配版 | ARMv7a Adapted Version**
+
+> 本仓库为 ARMv7a（32 位）设备提供持续更新的 RikkaHub 版本，基于官方最新源码构建，功能与官方版本完全一致。官方从 0.0.9 开始已不再提供 ARMv7a 支持。
+>
+> This repository provides continuously updated RikkaHub builds for ARMv7a (32-bit) devices, based on the latest official source code with identical functionality. Official support for ARMv7a was dropped starting from version 0.0.9.
+
 Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqxe5c4)
 
-[简体中文](README_ZH_CN.md) | [繁體中文](README_ZH_TW.md) | English
+[简体中文](README_ZH_CN.md) | [繁體中文](README_ZH_TW.md) | English | [ARMv7a 适配说明](README_ARMV7A.md)
 </div>
 
 <div align="center">
@@ -19,6 +25,17 @@ Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqx
 </div>
 
 ## 🚀 Download
+
+### 📱 ARMv7a 版本下载 | ARMv7a Build Download
+
+**GitHub Releases（本仓库）：**
+👉 [https://github.com/YunLv-L/rikkahub-armv7a/releases](https://github.com/YunLv-L/rikkahub-armv7a/releases)
+
+> 此版本适用于 ARMv7a（32 位）设备，如旧款 Android 手机。安装前请先卸载官方版本（签名不同，无法直接覆盖）。
+>
+> This version is for ARMv7a (32-bit) devices. Please uninstall the official version before installing (signatures differ).
+
+### 🔗 官方版本 | Official Builds
 
 🔗 [Download from Website](https://rikka-ai.com/download) (Recommended)
 
@@ -30,6 +47,9 @@ Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqx
 |:---------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <img src="docs/sponsors/aihubmix.png" alt="Aihubmix" width="50" /><br /><b>Aihubmix</b> | Thanks to <a href="https://aihubmix.com?aff=pG7r">aihubmix.com</a> for their financial support. We recommend using aihubmix as a one-stop shop for mainstream models worldwide. (OpenAI, Claude, Google Gemini, DeepSeek, Qwen, and hundreds more). |
 | <img src="docs/sponsors/suixiang.jpg" alt="随想AI网关" width="50" /><br /><b>随想AI网关</b> | 感谢随想AI网关对本项目的赞助！随想AI网关 是一家可靠高效的 API 中继服务提供商，提供 Claude、Codex、Gemini 等的中继服务。注重隐私的中转站·无数据倒卖·无模型掺水，隐私，透明，极速售后。新账户注册每日签到就送 0.5 元测试额度，充值额度 1:1，无需订阅，按量付费。多线路冗余、跨区域容灾、自动故障切换，长链路 SSE 不中断。99.9% 可用性，关键调用从不掉队。 |
+
+> 以上赞助为官方 RikkaHub 项目所有，本 ARMv7a 适配版不涉及任何商业赞助。  
+> The above sponsors belong to the official RikkaHub project; this ARMv7a adaptation does not involve any commercial sponsorship.
 
 ## ✨ Features
 
@@ -80,6 +100,10 @@ Technology stack documentation:
 
 ## 💰 Donate
 
+本 ARMv7a 适配版不接受捐赠，如果你希望支持 RikkaHub 的开发，请直接向官方项目捐赠：
+
+This ARMv7a adaptation does not accept donations. If you wish to support RikkaHub development, please donate to the official project:
+
 * [Patreon](https://patreon.com/rikkahub)
 * [爱发电](https://afdian.com/a/reovo)
 
@@ -87,8 +111,15 @@ Technology stack documentation:
 
 If you like this project, please give it a star ⭐
 
-[![Star History Chart](https://api.star-history.com/svg?repos=re-ovo/rikkahub&type=Date)](https://star-history.com/#re-ovo/rikkahub&Date)
+![Star History Chart](https://api.star-history.com/svg?repos=re-ovo/rikkahub,YunLv-L/rikkahub-armv7a&type=Date)]
+
+> 上图同时展示官方仓库（re-ovo/rikkahub）与本 ARMv7a 适配仓库（YunLv-L/rikkahub-armv7a）的 Star 增长趋势。  
+> The chart above shows the Star history of both the official repository (re-ovo/rikkahub) and this ARMv7a adapted repository (YunLv-L/rikkahub-armv7a).
 
 ## 📄 License
 
 [License](LICENSE)
+
+---
+
+如果还需要调整措辞或排版，随时告诉我。😊
