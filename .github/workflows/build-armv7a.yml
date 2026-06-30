@@ -82,11 +82,11 @@ jobs:
             -Pandroid.injected.signing.key.alias=${{ secrets.SIGNING_KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.SIGNING_KEY_PASSWORD }}
 
-      - name: Upload APK as Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: RikkaHub-armv7a-release
-          path: app/build/outputs/apk/release/*.apk
+          name: RikkaHub-release
+          path: app/build/outputs/apk/release/app-universal-release.apk
 
   # ========== 自动发布 Release ==========
   release:
