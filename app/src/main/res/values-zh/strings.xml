@@ -112,7 +112,7 @@
   <string name="assistant_page_quick_message_title">标题</string>
   <string name="assistant_page_quick_messages">快捷消息</string>
   <string name="assistant_page_recent_chats">参考历史聊天记录</string>
-  <string name="assistant_page_recent_chats_desc">启用后，助手将参考最近的聊天历史记录来提供更有上下文的回应</string>
+  <string name="assistant_page_recent_chats_desc">启用后，允许助手在过去的对话中搜索相关信息</string>
   <string name="assistant_page_regex_affecting_scopes">影响范围：</string>
   <string name="assistant_page_regex_desc">定义正则表达式模式，在发送/接收消息前对其进行转换</string>
   <string name="assistant_page_regex_find_regex">查找正则表达式</string>
@@ -959,6 +959,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="setting_provider_page_scan_error">错误: %s</string>
   <string name="setting_provider_page_scan_qr_code">扫描二维码</string>
   <string name="setting_provider_page_search_providers">搜索提供商</string>
+  <string name="setting_provider_page_recommend">推荐提供商</string>
   <string name="setting_provider_page_select_all">全选（%1$d）</string>
   <string name="setting_provider_page_select_from_gallery">从相册选择</string>
   <string name="setting_provider_page_service_account_email">服务账户邮箱</string>
@@ -999,7 +1000,11 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="setting_tts_page_provider_type">提供商类型</string>
   <string name="setting_tts_page_provider_type_description">选择TTS提供商类型</string>
   <string name="setting_tts_page_selected">已选择</string>
+  <string name="setting_tts_page_similarity_boost">相似度增强</string>
+  <string name="setting_tts_page_similarity_boost_description">控制语音与原始声音的匹配程度（0.0 - 1.0）</string>
   <string name="setting_tts_page_speech_rate">语音速度</string>
+  <string name="setting_tts_page_stability">稳定度</string>
+  <string name="setting_tts_page_stability_description">控制语音的稳定度（0.0 - 1.0，越低越有表现力）</string>
   <string name="setting_tts_page_speech_rate_description">控制语音播放速度 (0.1 - 3.0，1.0为正常速度)</string>
   <string name="setting_tts_page_speed">语速</string>
   <string name="setting_tts_page_speed_description">语音合成速度 (0.25 - 4.0)</string>
@@ -1241,4 +1246,21 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="error_mcp_invalid_server_name">无效的MCP服务器名称（仅允许字母数字字符）：%1$s</string>
   <string name="log_page_record_requests">记录请求</string>
   <string name="log_page_record_requests_desc">捕获请求标头、正文和响应元数据</string>
+  <string name="assistant_page_context_message_truncation_warning">限制上下文可能导致频繁的上下文截断，并阻止提示词缓存</string>
+  <string name="chat_message_tool_recent_chats">查看最近的对话</string>
+  <string name="chat_message_tool_conversation_search">搜索历史：%1$s</string>
+  <string name="assistant_page_local_tools_screen_time_title">屏幕时间</string>
+  <string name="assistant_page_local_tools_screen_time_desc">让AI读取你的应用屏幕使用时间</string>
+  <string name="assistant_page_local_tools_screen_time_permission_required">请在设置中授予“使用情况访问权限”以使用屏幕使用时间</string>
+  <string name="chat_message_tool_screen_time">读取屏幕时间</string>
+  <string name="tool_ui_screen_time_total">总屏幕时间</string>
+  <string name="permission_calendar_read">读取日历</string>
+  <string name="permission_calendar_read_desc">读取日历事件，以回答您与日程相关的问题</string>
+  <string name="permission_calendar_write">写入日历</string>
+  <string name="permission_calendar_write_desc">代表您创建日历事件</string>
+  <string name="assistant_page_local_tools_calendar_title">日历</string>
+  <string name="assistant_page_local_tools_calendar_desc">让AI查询和创建日历事件</string>
+  <string name="chat_message_tool_calendar_query">查询日历事件</string>
+  <string name="chat_message_tool_calendar_create">创建事件: %1$s</string>
 </resources>
+
