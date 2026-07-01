@@ -70,6 +70,27 @@ Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqx
 - 🌐 Custom HTTP request headers and request bodies
 - 💌 Silly Tavern character card import
 
+## ⚠️ 注意事项 | Notes
+
+### MCP 服务器别名命名限制 | MCP Server Alias Naming Restriction
+
+从 v2.3.0 版本开始，RikkaHub 对 MCP 服务器别名（Alias）增加了格式校验。别名**只能包含英文字母、数字、下划线 `_` 和连字符 `-`**，不允许包含空格或其他特殊字符。
+
+如果别名包含非法字符（如空格、中文、标点等），连接 MCP 服务器时会报以下错误：
+
+```
+retrofit2.HttpException: Invalid 'tools[2].function.name': string does not match pattern. 
+Expected a string that matches the pattern '^[a-zA-Z0-9_-]+$'.
+```
+
+**解决方法：** 将别名修改为合法格式，例如 `MT Manager` 改为 `MT-Manager` 或 `MT_Manager`。
+
+---
+
+> **Note:** Since v2.3.0, RikkaHub validates MCP server alias names. Aliases may only contain **letters, numbers, underscores `_`, and hyphens `-`**. Spaces and other special characters are not allowed.
+>
+> If your alias contains invalid characters, you will see the error above. Rename it to a valid format (e.g., change `MT Manager` to `MT-Manager` or `MT_Manager`).
+
 ## ✨ Contributing
 
 This project is developed using [Android Studio](https://developer.android.com/studio). PRs are
@@ -111,7 +132,7 @@ This ARMv7a adaptation does not accept donations. If you wish to support RikkaHu
 
 If you like this project, please give it a star ⭐
 
-![Star History Chart](https://api.star-history.com/svg?repos=re-ovo/rikkahub,YunLv-L/rikkahub-armv7a&type=Date)]
+![Star History Chart](https://api.star-history.com/svg?repos=re-ovo/rikkahub,YunLv-L/rikkahub-armv7a&type=Date)
 
 > 上图同时展示官方仓库（re-ovo/rikkahub）与本 ARMv7a 适配仓库（YunLv-L/rikkahub-armv7a）的 Star 增长趋势。  
 > The chart above shows the Star history of both the official repository (re-ovo/rikkahub) and this ARMv7a adapted repository (YunLv-L/rikkahub-armv7a).
