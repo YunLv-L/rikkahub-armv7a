@@ -140,7 +140,3 @@ If you like this project, please give it a star ⭐
 ## 📄 License
 
 [License](LICENSE)
-
----
-
-如果还需要调整措辞或排版，随时告诉我。😊
