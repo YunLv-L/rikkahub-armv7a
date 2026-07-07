@@ -92,15 +92,27 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: always() && needs.build.result == 'success'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version name from build.gradle.kts
+        id: version
+        run: |
+          VERSION=$(grep -E 'versionName\s*=' app/build.gradle.kts | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+          if [ -z "$VERSION" ]; then
+            echo "Failed to extract versionName"
+            exit 1
+          fi
+          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download APK artifact
         uses: actions/download-artifact@v4
         with:
-          name: RikkaHub-armv7a-release
+          name: RikkaHub-release
           path: ./apk
 
       - name: Get upstream release notes
@@ -114,11 +126,11 @@ jobs:
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (auto-tag)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: RikkaHub ARMv7a ${{ github.ref_name }}
+          tag_name: ${{ steps.version.outputs.TAG }}
+          name: RikkaHub ARMv7a ${{ steps.version.outputs.TAG }}
           body: ${{ steps.notes.outputs.NOTES }}
           files: ./apk/*.apk
           draft: false
@@ -126,7 +138,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ========== 邮件通知 Job（HTML 美化版） ==========
+  # ========== 邮件通知 Job ==========
   notify:
     needs: [build, release]
     runs-on: ubuntu-latest
