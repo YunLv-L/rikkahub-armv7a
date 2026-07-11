@@ -93,6 +93,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: always() && needs.build.result == 'success'
+    permissions:
+      contents: write 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
