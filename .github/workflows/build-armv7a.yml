@@ -1,0 +1,252 @@
+name: Build RikkaHub APK for ARMv7a
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+    tags: [ "v*" ]
+
+jobs:
+  # ========== 主构建 Job ==========
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ---------- JDK 21 ----------
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
+
+      - name: Install web-ui dependencies
+        run: |
+          cd web-ui
+          pnpm install
+        shell: bash
+
+      - name: Setup material-color-utilities
+        run: |
+          if [ -f kotlin.zip ]; then
+            mkdir -p material3/material-color-utilities
+            unzip -q kotlin.zip -d material3/material-color-utilities/
+            rm kotlin.zip
+          else
+            git clone --depth 1 --filter=blob:none --sparse \
+              https://github.com/material-foundation/material-color-utilities.git temp
+            cd temp && git sparse-checkout set kotlin && cd ..
+            mkdir -p material3/material-color-utilities
+            mv temp/kotlin material3/material-color-utilities/
+            rm -rf temp
+          fi
+
+      - name: Add google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
+
+      - name: Modify build.gradle.kts to include armeabi-v7a and x86
+        run: |
+          sed -i 's/abiFilters += listOf("arm64-v8a", "x86_64")/abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")/' app/build.gradle.kts
+
+      - name: Setup signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > keystore.p12
+
+      - name: Build Release APK with signing
+        run: |
+          ./gradlew assembleRelease \
+            -Dorg.gradle.jvm.toolchain.install=false \
+            -Dorg.gradle.java.home=$JAVA_HOME \
+            -Pandroid.injected.signing.store.file=$PWD/keystore.p12 \
+            -Pandroid.injected.signing.store.password=${{ secrets.SIGNING_KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.SIGNING_KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.SIGNING_KEY_PASSWORD }}
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RikkaHub-release
+          path: app/build/outputs/apk/release/app-universal-release.apk
+
+  # ========== 自动发布 Release ==========
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always() && needs.build.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version name from build.gradle.kts
+        id: version
+        run: |
+          VERSION=$(grep -E 'versionName\s*=' app/build.gradle.kts | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+          if [ -z "$VERSION" ]; then
+            echo "Failed to extract versionName"
+            exit 1
+          fi
+          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: RikkaHub-release
+          path: ./apk
+
+      - name: Get upstream release notes
+        id: notes
+        run: |
+          NOTES=$(curl -s https://api.github.com/repos/rikkahub/rikkahub/releases/latest | jq -r '.body')
+          if [ -z "$NOTES" ] || [ "$NOTES" = "null" ]; then
+            NOTES="自动构建的 ARMv7a 版本，基于上游最新代码。"
+          fi
+          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release (auto-tag)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG }}
+          name: RikkaHub ARMv7a ${{ steps.version.outputs.TAG }}
+          body: ${{ steps.notes.outputs.NOTES }}
+          files: ./apk/*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ========== 邮件通知 Job ==========
+  notify:
+    needs: [build, release]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Resend SDK
+        run: npm install resend
+
+      - name: Send build status email
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { Resend } = require('resend');
+            const resend = new Resend(process.env.RESEND_API_KEY);
+
+            const status = '${{ needs.build.result }}';
+            const workflowName = '${{ github.workflow }}';
+            const repoName = '${{ github.repository }}';
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const branch = '${{ github.ref_name }}';
+            const commit = '${{ github.sha }}';
+            const tag = '${{ github.ref_name }}';
+
+            const isSuccess = status === 'success';
+            const emoji = isSuccess ? '✅' : '❌';
+            const statusText = isSuccess ? '构建成功' : '构建失败';
+            const statusColor = isSuccess ? '#22c55e' : '#ef4444';
+            const statusBg = isSuccess ? '#f0fdf4' : '#fef2f2';
+
+            const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; background: #f9fafb; }
+                .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }
+                .header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+                .status-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-weight: 600; font-size: 14px; background: ${statusBg}; color: ${statusColor}; }
+                .title { font-size: 20px; font-weight: 700; color: #111827; margin: 0; }
+                .divider { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
+                .info-grid { display: grid; grid-template-columns: 100px 1fr; gap: 6px 16px; font-size: 14px; }
+                .info-label { color: #6b7280; font-weight: 500; }
+                .info-value { color: #111827; word-break: break-all; }
+                .btn { display: inline-block; margin-top: 20px; padding: 10px 28px; background: #111827; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 14px; }
+                .btn:hover { background: #1f2937; }
+                .footer { margin-top: 24px; font-size: 13px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 16px; text-align: center; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <span style="font-size:28px;">${emoji}</span>
+                  <span class="status-badge">${statusText}</span>
+                </div>
+                <p class="title">RikkaHub ARMv7a 自动构建</p>
+
+                <hr class="divider" />
+
+                <div class="info-grid">
+                  <span class="info-label">工作流</span>
+                  <span class="info-value">${workflowName}</span>
+
+                  <span class="info-label">状态</span>
+                  <span class="info-value" style="color:${statusColor};font-weight:600;">${status}</span>
+
+                  <span class="info-label">仓库</span>
+                  <span class="info-value">${repoName}</span>
+
+                  <span class="info-label">分支 / Tag</span>
+                  <span class="info-value">${tag}</span>
+
+                  <span class="info-label">提交</span>
+                  <span class="info-value" style="font-family:monospace;font-size:13px;">${commit}</span>
+                </div>
+
+                <div style="text-align:center;">
+                  <a href="${runUrl}" class="btn">查看运行详情 →</a>
+                </div>
+
+                <div class="footer">
+                  RikkaHub ARMv7a · 自动构建流水线
+                </div>
+              </div>
+            </body>
+            </html>
+            `;
+
+            const subject = isSuccess
+              ? `✅ [成功] RikkaHub ARMv7a 构建完成`
+              : `❌ [失败] RikkaHub ARMv7a 构建异常`;
+
+            await resend.emails.send({
+              from: 'RikkaHub Builder <noreply@mailhide.top>',
+              to: [process.env.RESEND_TO_EMAIL],
+              subject: subject,
+              html: html,
+              text: `状态: ${status}\n仓库: ${repoName}\n分支: ${tag}\n提交: ${commit}\n详情: ${runUrl}`,
+            });
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_TO_EMAIL: ${{ secrets.RESEND_TO_EMAIL }}
