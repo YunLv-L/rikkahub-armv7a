@@ -14,7 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ---------- JDK 21 ----------
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -61,10 +60,6 @@ jobs:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
-      - name: Modify build.gradle.kts to include armeabi-v7a and x86
-        run: |
-          sed -i 's/abiFilters += listOf("arm64-v8a", "x86_64")/abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")/' app/build.gradle.kts
-
       - name: Setup signing keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
@@ -82,17 +77,27 @@ jobs:
             -Pandroid.injected.signing.key.alias=${{ secrets.SIGNING_KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.SIGNING_KEY_PASSWORD }}
 
+      # 智能提取：不管上游怎么改路径，只要是 APK 就抓过来
+      - name: Prepare APK for upload
+        run: |
+          mkdir -p dist
+          find app/build/outputs/apk -name "*.apk" -exec cp {} dist/ \;
+          echo "=== Found APKs ==="
+          ls -lh dist/
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: RikkaHub-release
-          path: app/build/outputs/apk/release/app-universal-release.apk
+          path: dist/*.apk
 
   # ========== 自动发布 Release ==========
   release:
     needs: build
     runs-on: ubuntu-latest
     if: always() && needs.build.result == 'success'
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
